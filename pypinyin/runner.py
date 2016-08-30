@@ -9,7 +9,8 @@ from . import (                                    # noqa
     __title__, __version__, pinyin, slug,
     NORMAL, TONE, TONE2, TONE3, INITIALS, FIRST_LETTER,
     FINALS, FINALS_TONE, FINALS_TONE2, FINALS_TONE3,
-    BOPOMOFO, BOPOMOFO_FIRST
+    BOPOMOFO, BOPOMOFO_FIRST,
+    SPLIT
 )
 from .compat import PY2
 
@@ -33,7 +34,7 @@ def get_parser():
                         choices=['NORMAL', 'TONE', 'TONE2', 'TONE3',
                                  'INITIALS', 'FIRST_LETTER', 'FINALS',
                                  'FINALS_TONE', 'FINALS_TONE2', 'FINALS_TONE3',
-                                 'BOPOMOFO', 'BOPOMOFO_FIRST'], default='TONE')
+                                 'BOPOMOFO', 'BOPOMOFO_FIRST', 'SPLIT'], default='TONE')
     parser.add_argument('--separator', help='slug separator (default: "-")',
                         default='-')
     parser.add_argument('--errors', help=('how to handle none-pinyin string '
@@ -58,6 +59,8 @@ def main():
         pipe_data = sys.stdin.read().strip()
     else:
         pipe_data = ''
+
+    print "pipe_data: ",  pipe_data
     args = sys.argv[1:]
     if pipe_data:
         args.append(pipe_data)
@@ -88,7 +91,9 @@ def main():
     # 重设标准输出流和标准错误流
     # 不输出任何字符，防止污染命令行命令的输出结果
     # 其实主要是为了干掉 jieba 内的 print 语句 ;)
-    sys.stdout = sys.stderr = NullWriter()
+    # sys.stdout = sys.stderr = NullWriter()
+    # sys.stderr = NullWriter()
+
     result = func(hans, style=style, **kwargs)
     # 恢复默认
     sys.stdout = sys.__stdout__

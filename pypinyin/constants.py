@@ -6,18 +6,17 @@ from __future__ import unicode_literals
 import os
 import re
 
-from . import phonetic_symbol, pinyin_dict
+from . import phonetic_symbol
 from .compat import SUPPORT_UCS4
 
-# 词语拼音库
-if os.environ.get('PYPINYIN_NO_PHRASES'):
-    PHRASES_DICT = {}
-else:
-    from . import phrases_dict
-    PHRASES_DICT = phrases_dict.phrases_dict.copy()
+from .phrases_dict import phrases_dict
+from .pinyin_dict import pinyin_dict
 
+# 词汇库
+PHRASES_DICT = phrases_dict
 # 单字拼音库
-PINYIN_DICT = pinyin_dict.pinyin_dict.copy()
+PINYIN_DICT = pinyin_dict
+
 # 声母表
 _INITIALS = 'b,p,m,f,d,t,n,l,g,k,h,j,q,x,zh,ch,sh,r,z,c,s'.split(',')
 # 带声调字符与使用数字标识的字符的对应关系，类似： {u'ā': 'a1'}
@@ -66,6 +65,7 @@ PINYIN_STYLE = {
     'FINALS_TONE3': 9,    # 仅保留韵母部分，声调在拼音之后，使用数字 1~4 标识
     'BOPOMOFO': 10,       # 注音符号，带声调，阴平（第一声）不标
     'BOPOMOFO_FIRST': 11,  # 注音符号首字母
+    'SPLIT' : 12,
 }
 # 普通风格，不带声调
 NORMAL = STYLE_NORMAL = PINYIN_STYLE['NORMAL']
@@ -91,6 +91,8 @@ FINALS_TONE3 = STYLE_FINALS_TONE3 = PINYIN_STYLE['FINALS_TONE3']
 BOPOMOFO = STYLE_BOPOMOFO = PINYIN_STYLE['BOPOMOFO']
 # 注音符号首字母
 BOPOMOFO_FIRST = STYLE_BOPOMOFO_FIRST = PINYIN_STYLE['BOPOMOFO_FIRST']
+
+SPLIT = STYLE_SPLIT = PINYIN_STYLE['SPLIT']
 
 U_FINALS_EXCEPTIONS_MAP = {
     u'ū': u'ǖ',

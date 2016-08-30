@@ -16,36 +16,46 @@ from .constants import (
     BOPOMOFO_REPLACE, BOPOMOFO_TABLE,
     NORMAL, TONE, TONE2, TONE3, INITIALS, FIRST_LETTER,
     FINALS, FINALS_TONE, FINALS_TONE2, FINALS_TONE3,
-    BOPOMOFO, BOPOMOFO_FIRST
+    BOPOMOFO, BOPOMOFO_FIRST,
+    SPLIT
 )
 from .utils import simple_seg, _replace_tone2_style_dict_to_default
 
 
-def seg(hans):
-    if getattr(seg, 'no_jieba', None):
-        ret = hans
-        return simple_seg(ret)
+# def seg(hans):
+#     if getattr(seg, 'no_jieba', None):
+#         ret = hans
+#         return simple_seg(ret)
+#
+#     if seg.jieba is None:
+#         try:
+#             import jieba
+#             seg.jieba = jieba
+#         except ImportError:
+#             seg.no_jieba = True
+#         return seg(hans)
+#     else:
+#         hans = simple_seg(hans)
+#         ret = []
+#         for x in hans:
+#             if not RE_HANS.match(x):   # 没有拼音的字符，不再参与二次分词
+#                 ret.append(x)
+#             else:
+#                 ret.extend(list(seg.jieba.cut(x)))
+#         return ret
 
-    if seg.jieba is None:
-        try:
-            import jieba
-            seg.jieba = jieba
-        except ImportError:
-            seg.no_jieba = True
-        return seg(hans)
-    else:
-        hans = simple_seg(hans)
-        ret = []
-        for x in hans:
-            if not RE_HANS.match(x):   # 没有拼音的字符，不再参与二次分词
-                ret.append(x)
-            else:
-                ret.extend(list(seg.jieba.cut(x)))
-        return ret
+# seg.jieba = None
+# if os.environ.get('PYPINYIN_NO_JIEBA'):
+#     seg.no_jieba = True
 
-seg.jieba = None
-if os.environ.get('PYPINYIN_NO_JIEBA'):
-    seg.no_jieba = True
+def phrase_segment(hans):
+    try:
+        import jieba
+        segFunc = jieba.cut
+    except ImportError:
+        segFunc = simple_seg
+    ret = segFunc(hans)
+    return ret
 
 
 def load_single_dict(pinyin_dict, style='default'):
@@ -140,11 +150,13 @@ def to_fixed(pinyin, style):
     :rtype: unicode
     """
     # 声母
+    chInt = initial(pinyin)
     if style == INITIALS:
-        return initial(pinyin)
-
+        return chInt
+    # print "pinyin=", pinyin
     def _replace(m):
         symbol = m.group(0)  # 带声调的字符
+        # print "symbol=", symbol
         # 不包含声调
         if style in [NORMAL, FIRST_LETTER, FINALS]:
             # 去掉声调: a1 -> a
@@ -155,7 +167,7 @@ def to_fixed(pinyin, style):
                 return re.sub(RE_TONE2, r'\1', PHONETIC_SYMBOL[symbol])
         # 使用数字标识声调
         elif style in [TONE2, TONE3, FINALS_TONE2, FINALS_TONE3,
-                       BOPOMOFO, BOPOMOFO_FIRST]:
+                       BOPOMOFO, BOPOMOFO_FIRST, SPLIT]:
             # 返回使用数字标识声调的字符
             return PHONETIC_SYMBOL[symbol]
         # 声调在头上
@@ -168,9 +180,14 @@ def to_fixed(pinyin, style):
     if style in [TONE3, FINALS_TONE3, BOPOMOFO, BOPOMOFO_FIRST]:
         py = RE_TONE3.sub(r'\1\3\2', py)
 
+    # 记录韵母
+    chFinal = final(py)
+
+    # print "py=", py
+
     # 首字母
     if style == FIRST_LETTER:
-        py = py[0]
+        return py[0]
     # 韵母
     elif style in [FINALS, FINALS_TONE, FINALS_TONE2, FINALS_TONE3]:
         # 不处理鼻音: 'ḿ', 'ń', 'ň', 'ǹ'
@@ -186,6 +203,17 @@ def to_fixed(pinyin, style):
         py = ''.join(BOPOMOFO_TABLE.get(x, x) for x in py)
         if style == BOPOMOFO_FIRST:
             py = py[0]
+
+    elif style == SPLIT:
+        pho = u''
+        for c in chFinal:
+            if c in ['1', '2', '3', '4']:
+                pho = c
+                break
+
+        if pho:
+            chFinal = chFinal.replace(pho, '')
+        return chInt + '+' + chFinal + '+' + pho
     return py
 
 
@@ -261,11 +289,13 @@ def phrases_pinyin(phrases, style, heteronym, errors='default'):
     :return: 拼音列表
     :rtype: list
     """
+    print "phrases:: ",  phrases
+
     py = []
     if phrases in PHRASES_DICT:
         py = deepcopy(PHRASES_DICT[phrases])
-        for idx, item in enumerate(py):
-            py[idx] = [to_fixed(item[0], style=style)]
+        for i, v in enumerate(py):
+            py[i] = [to_fixed(v[0], style=style)]
     else:
         for i in phrases:
             single = single_pinyin(i, style=style, heteronym=heteronym,
@@ -275,21 +305,30 @@ def phrases_pinyin(phrases, style, heteronym, errors='default'):
     return py
 
 
-def _pinyin(words, style, heteronym, errors):
-    pys = []
-    # 初步过滤没有拼音的字符
-    if RE_HANS.match(words):
-        pys = phrases_pinyin(words, style=style, heteronym=heteronym,
-                             errors=errors)
-        return pys
+# def _pinyin(words, style, heteronym, errors):
+#     pys = []
+#     # 初步过滤没有拼音的字符
+#     if RE_HANS.match(words):
+#         pys = phrases_pinyin(words, style=style, heteronym=heteronym,
+#                              errors=errors)
+#         return pys
+#
+#     for word in words:
+#         if not (RE_HANS.match(word)):
+#             py = handle_nopinyin(word, errors=errors)
+#             pys.append(py) if py else None
+#         else:
+#             pys.extend(_pinyin(word, style, heteronym, errors))
+#     return pys
 
-    for word in simple_seg(words):
-        if not (RE_HANS.match(word)):
-            py = handle_nopinyin(word, errors=errors)
-            pys.append(py) if py else None
-        else:
-            pys.extend(_pinyin(word, style, heteronym, errors))
-    return pys
+def _PinYin(words, style, heteronym, errors):
+    # 将汉字转为拼音，非汉字保留
+    if RE_HANS.match(words):
+        return phrases_pinyin(words, style=style,
+                              heteronym=heteronym, errors=errors)
+
+    # 说明words里没有汉字
+    return list(words)
 
 
 def pinyin(hans, style=TONE, heteronym=False, errors='default'):
@@ -337,10 +376,12 @@ def pinyin(hans, style=TONE, heteronym=False, errors='default'):
     """
     # 对字符串进行分词处理
     if isinstance(hans, text_type):
-        hans = seg(hans)
+        hans = phrase_segment(hans)
+        # ret = [el for el in hans]
+        # print "ret:: ", ret
     pys = []
     for words in hans:
-        pys.extend(_pinyin(words, style, heteronym, errors))
+        pys.extend(_PinYin(words, style, heteronym, errors))
     return pys
 
 

@@ -10,7 +10,8 @@ from .constants import (
     STYLE_NORMAL, STYLE_TONE, STYLE_TONE2, STYLE_TONE3,
     STYLE_INITIALS, STYLE_FIRST_LETTER,
     STYLE_FINALS, STYLE_FINALS_TONE, STYLE_FINALS_TONE2, STYLE_FINALS_TONE3,
-    STYLE_BOPOMOFO, STYLE_BOPOMOFO_FIRST
+    STYLE_BOPOMOFO, STYLE_BOPOMOFO_FIRST,
+    STYLE_SPLIT, SPLIT
 )
 from .core import (     # noqa
     pinyin, lazy_pinyin, slug, load_single_dict, load_phrases_dict
@@ -47,7 +48,8 @@ __all__ = [
     'STYLE_FINALS_TONE3', 'FINALS_TONE3',
     'STYLE_FIRST_LETTER', 'FIRST_LETTER',
     'STYLE_BOPOMOFO', 'BOPOMOFO',
-    'STYLE_BOPOMOFO_FIRST', 'BOPOMOFO_FIRST'
+    'STYLE_BOPOMOFO_FIRST', 'BOPOMOFO_FIRST',
+    'STYLE_SPLIT', 'SPLIT'
 ]
 if PY2:
     # fix "TypeError: Item in ``from list'' not a string" on Python 2

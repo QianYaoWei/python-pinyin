@@ -12,7 +12,7 @@ from .constants import RE_HANS, RE_TONE2
 
 def _seg(chars):
     """按是否是汉字进行分词"""
-    s = ''  # 保存一个词
+    s = []  # 保存一个词
     ret = []  # 分词结果
     flag = 0  # 上一个字符是什么? 0: 汉字, 1: 不是汉字
 
@@ -22,24 +22,26 @@ def _seg(chars):
                 flag = 0
 
             if flag == 0:
-                s += c
+                s.append(c)
             else:  # 上一个字符不是汉字, 分词
-                ret.append(s)
+                ret.append(''.join(s))
                 flag = 0
-                s = c
+                del s[:]
+                s.append(c)
 
         else:  # 不是汉字
             if n == 0:  # 第一个字符, 确定 flag 的初始值
                 flag = 1
 
             if flag == 1:
-                s += c
+                s.append(c)
             else:  # 上一个字符是汉字, 分词
-                ret.append(s)
+                ret.append(''.join(s))
                 flag = 1
-                s = c
+                del s[:]
+                s.append(c)
 
-    ret.append(s)  # 最后的词
+    ret.append(''.join(s))
     return ret
 
 
