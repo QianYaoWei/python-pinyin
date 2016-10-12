@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 from copy import deepcopy
 from itertools import chain
-import os
 import re
 import warnings
 
@@ -153,10 +152,11 @@ def to_fixed(pinyin, style):
     chInt = initial(pinyin)
     if style == INITIALS:
         return chInt
-    # print "pinyin=", pinyin
+
+
     def _replace(m):
         symbol = m.group(0)  # 带声调的字符
-        # print "symbol=", symbol
+
         # 不包含声调
         if style in [NORMAL, FIRST_LETTER, FINALS]:
             # 去掉声调: a1 -> a
@@ -217,11 +217,38 @@ def to_fixed(pinyin, style):
     return py
 
 
+def To_Fixed(pinyin, style):
+    # 声母
+    chInt = initial(pinyin)
+
+    def _replace(m):
+        symbol = m.group(0)  # 带声调的字符
+        return PHONETIC_SYMBOL[symbol]
+
+    # 替换拼音中的带声调字符
+    py = re.sub(RE_PHONETIC_SYMBOL, _replace, pinyin)
+
+    # 记录韵母
+    chFinal = final(py)
+
+    pho = None
+    for c in chFinal:
+        if c in ['1', '2', '3', '4']:
+            pho = c
+            break
+
+    # 将声调移动到最后
+    if pho:
+        chFinal = chFinal.replace(pho, '')
+        return chInt + '+' + chFinal + '+' + pho
+    return py
+
+
 def toFixed(pinyin, style):
     warnings.warn(
         DeprecationWarning('"toFixed" is deprecated. Use "to_fixed" instead')
     )
-    return to_fixed(pinyin, style)
+    return To_Fixed(pinyin, style)
 
 
 def _handle_nopinyin_char(chars, errors='default'):
@@ -266,19 +293,38 @@ def single_pinyin(han, style, heteronym, errors='default'):
 
     pys = PINYIN_DICT[num].split(',')  # 字的拼音列表
     if not heteronym:
-        return [to_fixed(pys[0], style)]
+        return [To_Fixed(pys[0], style)]
 
     # 输出多音字的多个读音
     # 临时存储已存在的拼音，避免多音字拼音转换为非音标风格出现重复。
     py_cached = {}
     pinyins = []
     for i in pys:
-        py = to_fixed(i, style)
+        py = To_Fixed(i, style)
         if py in py_cached:
             continue
         py_cached[py] = py
         pinyins.append(py)
     return pinyins
+
+
+def Single_Pinyin(han, style, heteronym, errors='default'):
+    """单字拼音转换.
+
+    :param han: 单个汉字
+    :param errors: 指定如何处理没有拼音的字符，详情请参考
+                   :py:func:`~pypinyin.pinyin`
+    :return: 返回拼音列表，多音字会有多个拼音项
+    :rtype: list
+    """
+    num = ord(han)
+    # 处理没有拼音的字符
+    if num not in PINYIN_DICT:
+        return handle_nopinyin(han, errors=errors)
+
+    pys = PINYIN_DICT[num].split(',')  # 字的拼音列表
+    # 多音字默认取第一个
+    return [To_Fixed(pys[0], style)]
 
 
 def phrases_pinyin(phrases, style, heteronym, errors='default'):
@@ -295,31 +341,32 @@ def phrases_pinyin(phrases, style, heteronym, errors='default'):
     if phrases in PHRASES_DICT:
         py = deepcopy(PHRASES_DICT[phrases])
         for i, v in enumerate(py):
-            py[i] = [to_fixed(v[0], style=style)]
+            py[i] = [To_Fixed(v, style=style)]
     else:
-        for i in phrases:
-            single = single_pinyin(i, style=style, heteronym=heteronym,
+        for w in phrases:
+            single = Single_Pinyin(w, style=style, heteronym=heteronym,
                                    errors=errors)
             if single:
                 py.append(single)
     return py
 
 
-# def _pinyin(words, style, heteronym, errors):
-#     pys = []
-#     # 初步过滤没有拼音的字符
-#     if RE_HANS.match(words):
-#         pys = phrases_pinyin(words, style=style, heteronym=heteronym,
-#                              errors=errors)
-#         return pys
-#
-#     for word in words:
-#         if not (RE_HANS.match(word)):
-#             py = handle_nopinyin(word, errors=errors)
-#             pys.append(py) if py else None
-#         else:
-#             pys.extend(_pinyin(word, style, heteronym, errors))
-#     return pys
+def _pinyin(words, style, heteronym, errors):
+    pys = []
+    # 初步过滤没有拼音的字符
+    if RE_HANS.match(words):
+        pys = phrases_pinyin(words, style=style, heteronym=heteronym,
+                             errors=errors)
+        return pys
+
+    for word in words:
+        if not (RE_HANS.match(word)):
+            py = handle_nopinyin(word, errors=errors)
+            pys.append(py) if py else None
+        else:
+            pys.extend(_pinyin(word, style, heteronym, errors))
+    return pys
+
 
 def _PinYin(words, style, heteronym, errors):
     # 将汉字转为拼音，非汉字保留

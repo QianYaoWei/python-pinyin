@@ -3,12 +3,11 @@
 
 from __future__ import unicode_literals
 
-import os
 import re
 
-from . import phonetic_symbol
 from .compat import SUPPORT_UCS4
 
+from .phonetic_symbol import phonetic_symbol
 from .phrases_dict import phrases_dict
 from .pinyin_dict import pinyin_dict
 
@@ -17,10 +16,12 @@ PHRASES_DICT = phrases_dict
 # 单字拼音库
 PINYIN_DICT = pinyin_dict
 
+# 带声调字符与使用数字标识的字符的对应关系，类似： {u'ā': 'a1'}
+PHONETIC_SYMBOL = phonetic_symbol
+
 # 声母表
 _INITIALS = 'b,p,m,f,d,t,n,l,g,k,h,j,q,x,zh,ch,sh,r,z,c,s'.split(',')
-# 带声调字符与使用数字标识的字符的对应关系，类似： {u'ā': 'a1'}
-PHONETIC_SYMBOL = phonetic_symbol.phonetic_symbol.copy()
+
 # 所有的带声调字符
 re_phonetic_symbol_source = ''.join(PHONETIC_SYMBOL.keys())
 # 匹配带声调字符的正则表达式
