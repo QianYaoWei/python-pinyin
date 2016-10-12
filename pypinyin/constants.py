@@ -20,7 +20,8 @@ PINYIN_DICT = pinyin_dict
 PHONETIC_SYMBOL = phonetic_symbol
 
 # 声母表
-_INITIALS = 'b,p,m,f,d,t,n,l,g,k,h,j,q,x,zh,ch,sh,r,z,c,s'.split(',')
+#_INITIALS = 'b,p,m,f,d,t,n,l,g,k,h,j,q,x,zh,ch,sh,r,z,c,s'.split(',')
+_INITIALS = 'b,p,m,f,d,t,n,l,g,k,h,j,q,x,zh,ch,sh,r,z,c,s,y,w'.split(',')
 
 # 所有的带声调字符
 re_phonetic_symbol_source = ''.join(PHONETIC_SYMBOL.keys())

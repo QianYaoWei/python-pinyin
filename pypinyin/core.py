@@ -218,6 +218,7 @@ def to_fixed(pinyin, style):
 
 
 def To_Fixed(pinyin, style):
+    # 定制以后, style无用
     # 声母
     chInt = initial(pinyin)
 
@@ -335,8 +336,6 @@ def phrases_pinyin(phrases, style, heteronym, errors='default'):
     :return: 拼音列表
     :rtype: list
     """
-    print "phrases:: ",  phrases
-
     py = []
     if phrases in PHRASES_DICT:
         py = deepcopy(PHRASES_DICT[phrases])
@@ -424,8 +423,6 @@ def pinyin(hans, style=TONE, heteronym=False, errors='default'):
     # 对字符串进行分词处理
     if isinstance(hans, text_type):
         hans = phrase_segment(hans)
-        # ret = [el for el in hans]
-        # print "ret:: ", ret
     pys = []
     for words in hans:
         pys.extend(_PinYin(words, style, heteronym, errors))
