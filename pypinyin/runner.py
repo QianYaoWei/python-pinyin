@@ -4,7 +4,6 @@
 from __future__ import unicode_literals
 from argparse import ArgumentParser
 import sys
-
 from . import (                                    # noqa
     __title__, __version__, pinyin, slug,
     NORMAL, TONE, TONE2, TONE3, INITIALS, FIRST_LETTER,
@@ -34,7 +33,9 @@ def get_parser():
                         choices=['NORMAL', 'TONE', 'TONE2', 'TONE3',
                                  'INITIALS', 'FIRST_LETTER', 'FINALS',
                                  'FINALS_TONE', 'FINALS_TONE2', 'FINALS_TONE3',
-                                 'BOPOMOFO', 'BOPOMOFO_FIRST', 'SPLIT'], default='TONE')
+                                 'BOPOMOFO', 'BOPOMOFO_FIRST', 'SPLIT'],
+                        default='TONE')
+
     parser.add_argument('--separator', help='slug separator (default: "-")',
                         default='-')
     parser.add_argument('--errors', help=('how to handle none-pinyin string '
@@ -45,7 +46,10 @@ def get_parser():
     parser.add_argument('--heteronym', help='enable heteronym',
                         action='store_true')
     # 要查询的汉字
-    parser.add_argument('hans', help='chinese string')
+    parser.add_argument('--hans', help='chinese string', default='')
+
+    # 要执行的函数名称
+    parser.add_argument('--file', '-f',  help='input file')
     return parser
 
 
@@ -55,28 +59,37 @@ def main():
     logging.disable(logging.CRITICAL)
 
     # read hans from stdin
-    if not sys.stdin.isatty():
-        pipe_data = sys.stdin.read().strip()
-    else:
-        pipe_data = ''
+    # if not sys.stdin.isatty():
+    #     pipe_data = sys.stdin.read().strip()
+    # else:
+    #     pipe_data = ''
 
-    print "pipe_data: ",  pipe_data
     args = sys.argv[1:]
-    if pipe_data:
-        args.append(pipe_data)
 
     # 获取命令行选项和参数
     parser = get_parser()
     options = parser.parse_args(args)
-    if PY2:
-        hans = options.hans.decode(sys.stdin.encoding)
-    else:
-        hans = options.hans
+
     func = globals()[options.func]
     style = globals()[options.style]
     heteronym = options.heteronym
     separator = options.separator
     errors = options.errors
+
+    if PY2:
+        hans = options.hans.decode(sys.stdin.encoding)
+    else:
+        hans = options.hans
+
+    inputFile = options.file
+    file_object = open(inputFile,  'rb')
+    try:
+        all_the_text = file_object.read().decode('utf-8')
+        print "all_the_text=", all_the_text
+    finally:
+        file_object.close()
+
+    hans = all_the_text
 
     func_kwargs = {
         'pinyin': {'heteronym': heteronym, 'errors': errors},
