@@ -377,7 +377,7 @@ def _PinYin(words, style, heteronym, errors):
     return list(words)
 
 
-def pinyin(hans, style=TONE, heteronym=False, errors='default'):
+def pinyin(hans, style=TONE, heteronym=False, errors='default', **kwargs):
     """将汉字转换为拼音.
 
     :param hans: 汉字字符串( ``u'你好吗'`` )或列表( ``[u'你好', u'吗']`` ).
@@ -423,13 +423,14 @@ def pinyin(hans, style=TONE, heteronym=False, errors='default'):
     # 对字符串进行分词处理
     if isinstance(hans, text_type):
         hans = phrase_segment(hans)
+
     pys = []
     for words in hans:
         pys.extend(_PinYin(words, style, heteronym, errors))
     return pys
 
 
-def slug(hans, style=NORMAL, heteronym=False, separator='-', errors='default'):
+def slug(hans, style=NORMAL, heteronym=False, separator='-', errors='default', **kwargs):
     """生成 slug 字符串.
 
     :param hans: 汉字
